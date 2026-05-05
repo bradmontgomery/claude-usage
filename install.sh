@@ -3,7 +3,7 @@
 # Usage: curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/install.sh | bash
 set -euo pipefail
 
-REPO="OWNER/REPO"   # <-- replace with your GitHub username/repo
+REPO="bradmontgomery/claude-usage"
 BIN_NAME="claude-usage"
 INSTALL_DIR="${HOME}/.local/bin"
 CLAUDE_DIR="${HOME}/.claude"

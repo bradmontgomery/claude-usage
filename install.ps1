@@ -4,7 +4,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Repo     = "OWNER/REPO"   # <-- replace with your GitHub username/repo
+$Repo     = "bradmontgomery/claude-usage"
 $BinName  = "claude-usage"
 $Archive  = "claude-usage-windows-x86_64.zip"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\$BinName"
