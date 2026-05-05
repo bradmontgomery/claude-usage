@@ -32,6 +32,24 @@ The Python hook uses only the standard library — no `pip install` needed.
 
 ## Setup
 
+### Quick install (recommended)
+
+**Linux / macOS / WSL** — requires Python 3 and a terminal:
+```sh
+curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/install.sh | bash
+```
+
+**Windows** — run in PowerShell:
+```powershell
+irm https://raw.githubusercontent.com/OWNER/REPO/main/install.ps1 | iex
+```
+
+Both scripts download the pre-built binary for your platform, install the `SessionEnd` hook, and register it in `~/.claude/settings.json`. Safe to re-run.
+
+---
+
+### Manual setup
+
 ### 1. Install the hook (requires Python 3)
 
 ```sh
