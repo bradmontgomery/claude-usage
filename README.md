@@ -1,6 +1,9 @@
 # claude-usage
 
+_Yes, there's `/usage` but I wanted to try something different._
+
 A terminal dashboard for Claude Code session statistics, powered by a `SessionEnd` hook that writes a local JSONL log.
+
 
 ## What it shows
 
