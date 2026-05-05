@@ -42,7 +42,19 @@ make install-hook
 
 This copies `hook/collect-session-stats.py` to `~/.claude/` and registers the `SessionEnd` hook in `~/.claude/settings.json`. Safe to run multiple times — will not create duplicate entries.
 
-### 2. Install the CLI (requires Rust / cargo)
+### 2. Install the CLI
+
+**Option A — pre-built binary (no Rust required)**
+
+Download the archive for your platform from the [Releases page](../../releases/latest), extract it, and place the binary somewhere on your `PATH` (e.g. `~/.local/bin/`):
+
+| Platform | Archive |
+|----------|---------|
+| Linux / WSL | `claude-usage-linux-x86_64.tar.gz` |
+| macOS (Intel + Apple Silicon) | `claude-usage-macos-universal.tar.gz` |
+| Windows | `claude-usage-windows-x86_64.zip` |
+
+**Option B — build from source (requires Rust / cargo)**
 
 ```sh
 make install

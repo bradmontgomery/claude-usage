@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux (x86_64)
+            os: ubuntu-latest
+            archive: claude-usage-linux-x86_64.tar.gz
+
+          - name: macOS (universal)
+            os: macos-latest
+            archive: claude-usage-macos-universal.tar.gz
+
+          - name: Windows (x86_64)
+            os: windows-latest
+            archive: claude-usage-windows-x86_64.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # ── Linux: static musl binary (runs on any glibc version, including WSL) ──
+      - name: Install musl toolchain
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y musl-tools
+          rustup target add x86_64-unknown-linux-musl
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: tar czf ${{ matrix.archive }} -C target/x86_64-unknown-linux-musl/release claude-usage
+
+      # ── macOS: universal binary covering Intel + Apple Silicon ──
+      - name: Build (macOS universal)
+        if: runner.os == 'macOS'
+        run: |
+          rustup target add x86_64-apple-darwin aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+          cargo build --release --target aarch64-apple-darwin
+          lipo -create \
+            target/x86_64-apple-darwin/release/claude-usage \
+            target/aarch64-apple-darwin/release/claude-usage \
+            -output claude-usage
+          tar czf ${{ matrix.archive }} claude-usage
+
+      # ── Windows ──
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --release
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path target\release\claude-usage.exe -DestinationPath ${{ matrix.archive }}
+
+      # Upload each platform's archive to the same release.
+      # allowUpdates lets parallel jobs attach to the release as it's created.
+      - name: Upload to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: ${{ matrix.archive }}
+          allowUpdates: true
+          generateReleaseNotes: true
+          token: ${{ secrets.GITHUB_TOKEN }}
