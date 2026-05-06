@@ -1,14 +1,14 @@
 BIN         := claude-usage
+HOOK_BIN    := collect-session-stats
 INSTALL_DIR := $(HOME)/.local/bin
-CLAUDE_DIR  := $(HOME)/.claude
 
 .PHONY: build release run check install install-hook install-all clean help
 
 help:
 	@echo "Targets:"
-	@echo "  install-hook   copy hook script + register SessionEnd hook in ~/.claude/settings.json"
-	@echo "  install        build release binary and copy to $(INSTALL_DIR)"
-	@echo "  install-all    install-hook + install"
+	@echo "  install-hook   build + install both binaries, register SessionEnd hook"
+	@echo "  install        build release binaries and copy to $(INSTALL_DIR)"
+	@echo "  install-all    alias for install-hook"
 	@echo "  build          debug build"
 	@echo "  release        optimized build"
 	@echo "  run            cargo run (pass args after --)"
@@ -30,14 +30,13 @@ check:
 install: release
 	mkdir -p $(INSTALL_DIR)
 	cp target/release/$(BIN) $(INSTALL_DIR)/$(BIN)
-	@echo "Installed to $(INSTALL_DIR)/$(BIN)"
+	cp target/release/$(HOOK_BIN) $(INSTALL_DIR)/$(HOOK_BIN)
+	@echo "Installed to $(INSTALL_DIR)"
 
-install-hook:
-	mkdir -p $(CLAUDE_DIR)
-	cp hook/collect-session-stats.py $(CLAUDE_DIR)/collect-session-stats.py
-	python3 hook/register.py
+install-hook: install
+	python3 hook/register.py $(INSTALL_DIR)/$(HOOK_BIN)
 
-install-all: install-hook install
+install-all: install-hook
 
 clean:
 	cargo clean

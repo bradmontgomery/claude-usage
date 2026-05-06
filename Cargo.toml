@@ -7,6 +7,10 @@ edition = "2021"
 name = "claude-usage"
 path = "src/main.rs"
 
+[[bin]]
+name = "collect-session-stats"
+path = "src/collect_session_stats.rs"
+
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }

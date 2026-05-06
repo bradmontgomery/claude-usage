@@ -1,16 +1,16 @@
 # Install claude-usage binary + SessionEnd hook.
-# Usage: irm https://raw.githubusercontent.com/OWNER/REPO/main/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.ps1 | iex
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'  # prevents Invoke-WebRequest from hanging on PS 5.1
 
-$Repo     = "bradmontgomery/claude-usage"
-$BinName  = "claude-usage"
-$Archive  = "claude-usage-windows-x86_64.zip"
+$Repo       = "bradmontgomery/claude-usage"
+$BinName    = "claude-usage"
+$HookBin    = "collect-session-stats"
+$Archive    = "claude-usage-windows-x86_64.zip"
 $InstallDir = Join-Path $env:LOCALAPPDATA "Programs\$BinName"
 $ClaudeDir  = Join-Path $env:USERPROFILE ".claude"
-$RawBase    = "https://raw.githubusercontent.com/$Repo/main"
 $ApiBase    = "https://api.github.com/repos/$Repo"
 
 function Info($msg) { Write-Host "==> $msg" -ForegroundColor Blue }
@@ -43,7 +43,7 @@ $tag = $release.tag_name
 if (-not $tag) { Die "Could not determine latest release tag." }
 Ok "Latest release: $tag"
 
-# ── Download & install binary ────────────────────────────────────────────────
+# ── Download & install binaries ──────────────────────────────────────────────
 
 $downloadUrl = "https://github.com/$Repo/releases/download/$tag/$Archive"
 $tmpDir = Join-Path $env:TEMP "claude-usage-install-$([System.IO.Path]::GetRandomFileName())"
@@ -52,28 +52,27 @@ New-Item -ItemType Directory -Path $tmpDir | Out-Null
 Info "Downloading $Archive..."
 Invoke-WebRequest $downloadUrl -OutFile (Join-Path $tmpDir $Archive) -UseBasicParsing
 
-Info "Installing binary to $InstallDir..."
+Info "Installing binaries to $InstallDir..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Expand-Archive (Join-Path $tmpDir $Archive) -DestinationPath $tmpDir -Force
 Copy-Item (Join-Path $tmpDir "$BinName.exe") (Join-Path $InstallDir "$BinName.exe") -Force
+Copy-Item (Join-Path $tmpDir "$HookBin.exe") (Join-Path $InstallDir "$HookBin.exe") -Force
 Remove-Item $tmpDir -Recurse -Force
 Ok "Installed $InstallDir\$BinName.exe"
+Ok "Installed $InstallDir\$HookBin.exe"
 
-# ── Install hook script ──────────────────────────────────────────────────────
+# ── Register SessionEnd hook ─────────────────────────────────────────────────
 
-Info "Installing SessionEnd hook..."
-New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
-$hookDest = Join-Path $ClaudeDir "collect-session-stats.py"
-Invoke-WebRequest "$RawBase/hook/collect-session-stats.py" -OutFile $hookDest -UseBasicParsing
-Ok "Saved hook to $hookDest"
+Info "Registering SessionEnd hook..."
 
-# Register hook in settings.json
 $settingsPath = Join-Path $ClaudeDir "settings.json"
-$hookCmd = "python3 $hookDest"
+$hookCmd = "$InstallDir\$HookBin.exe"
 $entry = @{
     matcher = ""
     hooks   = @(@{ type = "command"; command = $hookCmd })
 }
+
+New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
 
 if (Test-Path $settingsPath) {
     try {
@@ -88,11 +87,11 @@ if (Test-Path $settingsPath) {
 }
 
 if ($config -ne $null) {
-    if (-not $config.ContainsKey("hooks"))            { $config["hooks"] = @{} }
+    if (-not $config.ContainsKey("hooks"))               { $config["hooks"] = @{} }
     if (-not $config["hooks"].ContainsKey("SessionEnd")) { $config["hooks"]["SessionEnd"] = @() }
 
     $alreadyRegistered = $config["hooks"]["SessionEnd"] | Where-Object {
-        $_.hooks -and $_.hooks[0].command -like "*collect-session-stats.py*"
+        $_.hooks -and $_.hooks[0].command -like "*collect-session-stats*"
     }
 
     if ($alreadyRegistered) {

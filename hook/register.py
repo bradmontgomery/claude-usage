@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Register the collect-session-stats.py SessionEnd hook in ~/.claude/settings.json.
+Register the collect-session-stats SessionEnd hook in ~/.claude/settings.json.
 Safe to run multiple times — will not create duplicate entries.
+
+Usage: python3 hook/register.py [/path/to/collect-session-stats]
+Default path: ~/.local/bin/collect-session-stats
 """
 
 import json
@@ -10,8 +13,9 @@ from pathlib import Path
 
 CLAUDE_DIR = Path.home() / ".claude"
 SETTINGS = CLAUDE_DIR / "settings.json"
-HOOK_SCRIPT = CLAUDE_DIR / "collect-session-stats.py"
-HOOK_COMMAND = f"python3 {HOOK_SCRIPT}"
+
+hook_binary = sys.argv[1] if len(sys.argv) > 1 else str(Path.home() / ".local" / "bin" / "collect-session-stats")
+HOOK_COMMAND = hook_binary
 
 HOOK_ENTRY = {
     "matcher": "",
@@ -34,9 +38,9 @@ def main():
     hooks = config.setdefault("hooks", {})
     session_end = hooks.setdefault("SessionEnd", [])
 
-    # Idempotency check — skip if already registered
+    # Matches both old python hook and new Rust binary
     already = any(
-        "collect-session-stats.py" in e.get("hooks", [{}])[0].get("command", "")
+        "collect-session-stats" in e.get("hooks", [{}])[0].get("command", "")
         for e in session_end
         if e.get("hooks")
     )

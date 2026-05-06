@@ -47,7 +47,7 @@ jobs:
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
-        run: tar czf ${{ matrix.archive }} -C target/x86_64-unknown-linux-musl/release claude-usage
+        run: tar czf ${{ matrix.archive }} -C target/x86_64-unknown-linux-musl/release claude-usage collect-session-stats
 
       # ── macOS: universal binary covering Intel + Apple Silicon ──
       - name: Build (macOS universal)
@@ -60,7 +60,11 @@ jobs:
             target/x86_64-apple-darwin/release/claude-usage \
             target/aarch64-apple-darwin/release/claude-usage \
             -output claude-usage
-          tar czf ${{ matrix.archive }} claude-usage
+          lipo -create \
+            target/x86_64-apple-darwin/release/collect-session-stats \
+            target/aarch64-apple-darwin/release/collect-session-stats \
+            -output collect-session-stats
+          tar czf ${{ matrix.archive }} claude-usage collect-session-stats
 
       # ── Windows ──
       - name: Build (Windows)
@@ -70,7 +74,7 @@ jobs:
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -Path target\release\claude-usage.exe -DestinationPath ${{ matrix.archive }}
+        run: Compress-Archive -Path target\release\claude-usage.exe,target\release\collect-session-stats.exe -DestinationPath ${{ matrix.archive }}
 
       # Upload each platform's archive to the same release.
       # allowUpdates lets parallel jobs attach to the release as it's created.

@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # Install claude-usage binary + SessionEnd hook.
-# Usage: curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.sh | bash
 set -euo pipefail
 
 REPO="bradmontgomery/claude-usage"
 BIN_NAME="claude-usage"
+HOOK_BIN="collect-session-stats"
 INSTALL_DIR="${HOME}/.local/bin"
-CLAUDE_DIR="${HOME}/.claude"
-RAW_BASE="https://raw.githubusercontent.com/${REPO}/main"
 API_BASE="https://api.github.com/repos/${REPO}"
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -44,7 +43,7 @@ TAG=$(curl -fsSL "${API_BASE}/releases/latest" \
 [[ -n "$TAG" ]] || die "Could not determine latest release tag."
 ok "Latest release: ${TAG}"
 
-# ── Download & install binary ────────────────────────────────────────────────
+# ── Download & install binaries ──────────────────────────────────────────────
 
 DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${TAG}/${ARCHIVE}"
 TMPDIR=$(mktemp -d)
@@ -53,29 +52,26 @@ trap 'rm -rf "$TMPDIR"' EXIT
 info "Downloading ${ARCHIVE}..."
 curl -fsSL "$DOWNLOAD_URL" -o "${TMPDIR}/${ARCHIVE}"
 
-info "Installing binary to ${INSTALL_DIR}..."
+info "Installing binaries to ${INSTALL_DIR}..."
 mkdir -p "$INSTALL_DIR"
 tar xzf "${TMPDIR}/${ARCHIVE}" -C "$TMPDIR"
 mv "${TMPDIR}/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
-chmod +x "${INSTALL_DIR}/${BIN_NAME}"
+mv "${TMPDIR}/${HOOK_BIN}" "${INSTALL_DIR}/${HOOK_BIN}"
+chmod +x "${INSTALL_DIR}/${BIN_NAME}" "${INSTALL_DIR}/${HOOK_BIN}"
 ok "Installed ${INSTALL_DIR}/${BIN_NAME}"
+ok "Installed ${INSTALL_DIR}/${HOOK_BIN}"
 
-# ── Install hook script ──────────────────────────────────────────────────────
+# ── Register SessionEnd hook ─────────────────────────────────────────────────
 
-info "Installing SessionEnd hook..."
-mkdir -p "$CLAUDE_DIR"
-curl -fsSL "${RAW_BASE}/hook/collect-session-stats.py" \
-  -o "${CLAUDE_DIR}/collect-session-stats.py"
-ok "Saved hook to ${CLAUDE_DIR}/collect-session-stats.py"
+info "Registering SessionEnd hook..."
 
-# Register hook in settings.json
 python3 - <<PYTHON
 import json, sys
 from pathlib import Path
 
 CLAUDE_DIR = Path.home() / ".claude"
 SETTINGS   = CLAUDE_DIR / "settings.json"
-HOOK_CMD   = f"python3 {CLAUDE_DIR / 'collect-session-stats.py'}"
+HOOK_CMD   = "${INSTALL_DIR}/${HOOK_BIN}"
 ENTRY      = {"matcher": "", "hooks": [{"type": "command", "command": HOOK_CMD}]}
 
 CLAUDE_DIR.mkdir(exist_ok=True)
@@ -89,7 +85,7 @@ if SETTINGS.exists():
 
 session_end = config.setdefault("hooks", {}).setdefault("SessionEnd", [])
 already = any(
-    "collect-session-stats.py" in (e.get("hooks") or [{}])[0].get("command", "")
+    "collect-session-stats" in (e.get("hooks") or [{}])[0].get("command", "")
     for e in session_end
 )
 if already:
