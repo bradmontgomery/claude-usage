@@ -3,11 +3,12 @@ Guidance for Claude Code when working in this repository.
 
 ## Commands
 ```sh
-make build        # debug build
+make build        # debug build (both binaries)
 make release      # optimized release build
-make run          # cargo run (append -- <flags> for CLI args)
+make run          # cargo run claude-usage (append -- <flags> for CLI args)
 make check        # fast compile check without producing a binary
-make install      # release build + copy to ~/.local/bin/claude-usage
+make install      # release build + copy both binaries to ~/.local/bin
+make install-hook # install + register the SessionEnd hook in ~/.claude/settings.json
 make clean        # remove target/
 ```
 
@@ -15,10 +16,20 @@ Pass CLI flags via `cargo run -- --days 7 --chart tokens` or `make run -- --days
 
 ## Architecture
 
-Single-file Rust CLI (`src/main.rs`). No modules — all logic lives in `main.rs`.
+Two Rust binaries, both in `src/`. No modules — all logic lives in the respective source file.
+
+### `src/collect_session_stats.rs` — SessionEnd hook
+
+Registered as a Claude Code `SessionEnd` hook. Reads the session payload (JSON) from stdin, parses the transcript JSONL file, tallies tokens and cost per model, and appends one record to `~/.claude/usage-log.jsonl`.
+
+**Key types:** `HookPayload`, `TranscriptEntry`, `AssistantMessage`, `TokenUsage`, `ModelTokens`, `SessionRecord`
+
+Pricing table lives in `model_price()` — update this when Anthropic changes pricing.
+
+### `src/main.rs` — `claude-usage` dashboard CLI
 
 **Data flow:**
-1. Reads `~/.claude/usage-log.jsonl` (written by a Claude Code `SessionEnd` hook)
+1. Reads `~/.claude/usage-log.jsonl`
 2. Deserializes each line into `SessionRecord` / `ModelTokens` structs
 3. Filters by `--days` cutoff, aggregates daily totals into a `BTreeMap<NaiveDate, f64>`
 4. Prints: bar chart → summary line → `comfy-table` session table with a totals row

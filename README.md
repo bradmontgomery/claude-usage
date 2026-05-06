@@ -19,7 +19,7 @@ A terminal dashboard for Claude Code session statistics, powered by a `SessionEn
 Claude Code session ends
         │
         ▼
-SessionEnd hook fires collect-session-stats.py
+SessionEnd hook fires collect-session-stats
         │   reads transcript, tallies tokens + cost per model
         ▼
 ~/.claude/usage-log.jsonl  ←  one JSON record appended per session
@@ -28,13 +28,13 @@ SessionEnd hook fires collect-session-stats.py
 claude-usage CLI reads the log and renders the dashboard
 ```
 
-The Python hook uses only the standard library — no `pip install` needed.
+Both tools are native binaries — no Python or other runtime required.
 
 ## Setup
 
 ### Quick install (recommended)
 
-**Linux / macOS / WSL** — requires Python 3 and a terminal:
+**Linux / macOS / WSL** — requires Python 3 (for settings.json registration) and curl:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.sh | bash
 ```
@@ -44,27 +44,25 @@ curl -fsSL https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/in
 irm https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.ps1 | iex
 ```
 
-Both scripts download the pre-built binary for your platform, install the `SessionEnd` hook, and register it in `~/.claude/settings.json`. Safe to re-run.
+Both scripts download the pre-built binaries for your platform, install the `SessionEnd` hook, and register it in `~/.claude/settings.json`. Safe to re-run.
 
 ---
 
-### Manual setup
+### Manual setup (from source)
 
-### 1. Install the hook (requires Python 3)
+Requires Rust / cargo and Python 3.
 
 ```sh
-git clone https://github.com/your-username/claude-usage.git
+git clone https://github.com/bradmontgomery/claude-usage.git
 cd claude-usage
 make install-hook
 ```
 
-This copies `hook/collect-session-stats.py` to `~/.claude/` and registers the `SessionEnd` hook in `~/.claude/settings.json`. Safe to run multiple times — will not create duplicate entries.
+`make install-hook` builds both binaries, copies them to `~/.local/bin/`, and registers the `SessionEnd` hook in `~/.claude/settings.json`. Make sure `~/.local/bin` is on your `PATH`.
 
-### 2. Install the CLI
+### Pre-built binaries
 
-**Option A — pre-built binary (no Rust required)**
-
-Download the archive for your platform from the [Releases page](../../releases/latest), extract it, and place the binary somewhere on your `PATH` (e.g. `~/.local/bin/`):
+Download the archive for your platform from the [Releases page](../../releases/latest) and extract both binaries (`claude-usage` and `collect-session-stats`) to somewhere on your `PATH`:
 
 | Platform | Archive |
 |----------|---------|
@@ -72,21 +70,13 @@ Download the archive for your platform from the [Releases page](../../releases/l
 | macOS (Intel + Apple Silicon) | `claude-usage-macos-universal.tar.gz` |
 | Windows | `claude-usage-windows-x86_64.zip` |
 
-**Option B — build from source (requires Rust / cargo)**
+Then register the hook manually by running `hook/register.py` with the path to the installed `collect-session-stats` binary:
 
 ```sh
-make install
+python3 hook/register.py /path/to/collect-session-stats
 ```
 
-Builds a release binary and copies it to `~/.local/bin/claude-usage`. Make sure `~/.local/bin` is on your `PATH`.
-
-Or do both steps at once:
-
-```sh
-make install-all
-```
-
-### 3. Use it
+### First run
 
 Start (or finish) a Claude Code session to generate your first log entry, then:
 
@@ -111,18 +101,20 @@ claude-usage --chart tokens --days 14
 ## Development
 
 ```sh
-make build    # debug build
-make release  # optimized build (also used by install)
-make run      # cargo run with default flags
-make check    # fast compile check, no binary produced
-make clean    # remove the target/ directory
+make build        # debug build (both binaries)
+make release      # optimized build
+make run          # cargo run claude-usage (pass args after --)
+make check        # fast compile check, no binary produced
+make install      # build + copy both binaries to ~/.local/bin
+make install-hook # install + register the SessionEnd hook
+make clean        # remove the target/ directory
 ```
 
 ## Keeping pricing current
 
-The hook prices API usage using a table in `hook/collect-session-stats.py`. If Anthropic changes pricing, update `MODEL_PRICING` near the top of that file and re-run `make install-hook`.
+Token pricing is defined in `src/collect_session_stats.rs` in the `model_price` function. If Anthropic changes pricing, update the values there, rebuild with `make install`, and re-run `make install-hook` to re-register.
 
-Models not found in the table are tracked but marked as unpriced — the CLI will show a warning when this happens.
+Models not in the pricing table are tracked but marked as unpriced — the CLI will show a warning when this happens.
 
 ## Log format
 
