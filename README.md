@@ -11,7 +11,7 @@ A terminal dashboard for Claude Code session statistics, powered by a `SessionEn
 - **Summary line** — session count, total cost, total tokens, and models seen
 - **Session table** — date/time, git branch, duration, message and tool-call counts, tokens, cost, plus a bold totals row
 
-![screenshot](screenshot.png)
+![screenshot](docs/screenshot.png)
 
 ## How it works
 
