@@ -50,7 +50,7 @@ $tmpDir = Join-Path $env:TEMP "claude-usage-install-$([System.IO.Path]::GetRando
 New-Item -ItemType Directory -Path $tmpDir | Out-Null
 
 Info "Downloading $Archive..."
-Invoke-WebRequest $downloadUrl -OutFile (Join-Path $tmpDir $Archive)
+Invoke-WebRequest $downloadUrl -OutFile (Join-Path $tmpDir $Archive) -UseBasicParsing
 
 Info "Installing binary to $InstallDir..."
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
@@ -64,7 +64,7 @@ Ok "Installed $InstallDir\$BinName.exe"
 Info "Installing SessionEnd hook..."
 New-Item -ItemType Directory -Force -Path $ClaudeDir | Out-Null
 $hookDest = Join-Path $ClaudeDir "collect-session-stats.py"
-Invoke-WebRequest "$RawBase/hook/collect-session-stats.py" -OutFile $hookDest
+Invoke-WebRequest "$RawBase/hook/collect-session-stats.py" -OutFile $hookDest -UseBasicParsing
 Ok "Saved hook to $hookDest"
 
 # Register hook in settings.json
