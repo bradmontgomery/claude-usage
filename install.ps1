@@ -3,6 +3,7 @@
 #Requires -Version 5.1
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'  # prevents Invoke-WebRequest from hanging on PS 5.1
 
 $Repo     = "bradmontgomery/claude-usage"
 $BinName  = "claude-usage"
@@ -97,7 +98,8 @@ if ($config -ne $null) {
         Ok "Hook already registered."
     } else {
         $config["hooks"]["SessionEnd"] += $entry
-        $config | ConvertTo-Json -Depth 10 | Set-Content $settingsPath -Encoding UTF8
+        $json = $config | ConvertTo-Json -Depth 10
+        [System.IO.File]::WriteAllText($settingsPath, $json, [System.Text.UTF8Encoding]::new($false))
         Ok "Registered SessionEnd hook in $settingsPath"
     }
 }
