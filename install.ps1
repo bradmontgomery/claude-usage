@@ -77,7 +77,8 @@ $entry = @{
 
 if (Test-Path $settingsPath) {
     try {
-        $config = Get-Content $settingsPath -Raw | ConvertFrom-Json | ConvertTo-Hashtable
+        $parsed = Get-Content $settingsPath -Raw | ConvertFrom-Json
+        $config = ConvertTo-Hashtable $parsed
     } catch {
         Write-Warning "settings.json contains invalid JSON — skipping hook registration."
         $config = $null
