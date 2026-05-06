@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📊 claude-usage</title>
+  <link rel="stylesheet" href="https://unpkg.com/chota@latest" />
+  <style>
+    :root {
+      --color-primary: #4a9c6d;
+      --grid-maxWidth: 86rem;
+    }
+
+    body {
+      padding-bottom: 4rem;
+    }
+
+    nav.nav {
+      border-bottom: 1px solid var(--color-lightGrey);
+      margin-bottom: 2.5rem;
+      padding: 0.75rem 0;
+    }
+
+    .nav .brand {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--font-color);
+    }
+
+    .hero {
+      padding: 3rem 0 2rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--color-grey);
+      margin-bottom: 1.5rem;
+    }
+
+    .screenshot {
+      max-width: 100%;
+      border-radius: 6px;
+      border: 1px solid var(--color-lightGrey);
+      margin: 2rem auto;
+      display: block;
+    }
+
+    h2 {
+      margin-top: 2.5rem;
+      border-bottom: 2px solid var(--color-lightGrey);
+      padding-bottom: 0.4rem;
+    }
+
+    pre {
+      background: #f5f5f5;
+      border: 1px solid var(--color-lightGrey);
+      border-radius: 4px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+
+    code {
+      background: #f5f5f5;
+      border-radius: 3px;
+      padding: 0.1em 0.35em;
+      font-size: 0.9em;
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    .pipeline {
+      font-family: var(--font-family-mono);
+      background: #f5f5f5;
+      border: 1px solid var(--color-lightGrey);
+      border-radius: 4px;
+      padding: 1.25rem 1.5rem;
+      line-height: 1.9;
+      white-space: pre;
+      overflow-x: auto;
+      font-size: 0.88rem;
+    }
+
+    table {
+      width: 100%;
+    }
+
+    .install-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn {
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--color-lightGrey);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      background: #f5f5f5;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .tab-btn.active {
+      background: white;
+      border-bottom: 1px solid white;
+      color: var(--color-primary);
+    }
+
+    .tab-panel {
+      border: 1px solid var(--color-lightGrey);
+      border-radius: 0 4px 4px 4px;
+      padding: 1.25rem;
+    }
+
+    .tab-panel pre {
+      border: none;
+      margin: 0;
+      padding: 0;
+      background: none;
+    }
+
+    .tag {
+      display: inline-block;
+      background: var(--color-lightGrey);
+      border-radius: 3px;
+      padding: 0.1em 0.5em;
+      font-size: 0.8rem;
+      font-weight: 600;
+      vertical-align: middle;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 4rem;
+      color: var(--color-grey);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-left">
+        <a class="brand" href="#">📊 claude-usage</a>
+      </div>
+      <div class="nav-right">
+        <a href="https://github.com/bradmontgomery/claude-usage">GitHub</a>
+        <a href="https://github.com/bradmontgomery/claude-usage/releases/latest" class="button primary outline is-small" style="margin-left:1rem;">Latest release</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Hero -->
+    <section class="hero">
+      <h1>📊 claude-usage</h1>
+      <p>A terminal dashboard for Claude Code session statistics,<br>powered by a <code>SessionEnd</code> hook that writes a local JSONL log.</p>
+      <div>
+        <a href="#install" class="button primary">Get started</a>
+        <a href="https://github.com/bradmontgomery/claude-usage" class="button outline" style="margin-left:0.75rem;">View on GitHub</a>
+      </div>
+      <img src="../screenshot.png" alt="claude-usage terminal dashboard screenshot" class="screenshot" />
+    </section>
+
+    <!-- What it shows -->
+    <section id="what-it-shows">
+      <h2>What it shows</h2>
+      <ul>
+        <li><strong>Bar chart</strong> — daily aggregated cost (or token) usage scaled to max, with green bars and yellow values</li>
+        <li><strong>Summary line</strong> — session count, total cost, total tokens, and models seen</li>
+        <li><strong>Session table</strong> — date/time, git branch, duration, message and tool-call counts, tokens, cost, plus a bold totals row</li>
+      </ul>
+    </section>
+
+    <!-- How it works -->
+    <section id="how-it-works">
+      <h2>How it works</h2>
+      <div class="pipeline">Claude Code session ends
+        │
+        ▼
+SessionEnd hook fires collect-session-stats
+        │   reads transcript, tallies tokens + cost per model
+        ▼
+~/.claude/usage-log.jsonl  ←  one JSON record appended per session
+        │
+        ▼
+claude-usage CLI reads the log and renders the dashboard</div>
+      <p style="margin-top:1rem;">Both tools are native binaries — no Python or other runtime required.</p>
+    </section>
+
+    <!-- Install -->
+    <section id="install">
+      <h2>Setup</h2>
+
+      <h3>Quick install <span class="tag">recommended</span></h3>
+
+      <div class="install-tabs">
+        <button class="tab-btn active" onclick="showTab('linux')">Linux / macOS / WSL</button>
+        <button class="tab-btn" onclick="showTab('windows')">Windows</button>
+      </div>
+
+      <div id="tab-linux" class="tab-panel">
+        <p style="margin:0 0 0.75rem;">Requires <code>curl</code>. Installs both binaries to <code>~/.local/bin</code> and registers the hook.</p>
+        <pre><code>curl -fsSL https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.sh | bash</code></pre>
+      </div>
+
+      <div id="tab-windows" class="tab-panel" style="display:none;">
+        <p style="margin:0 0 0.75rem;">Run in PowerShell (5.1 or later):</p>
+        <pre><code>irm https://raw.githubusercontent.com/bradmontgomery/claude-usage/main/install.ps1 | iex</code></pre>
+      </div>
+
+      <p>Both scripts download the pre-built binaries for your platform, install the <code>SessionEnd</code> hook, and register it in <code>~/.claude/settings.json</code>. Safe to re-run.</p>
+
+      <hr />
+
+      <h3>Manual setup (from source)</h3>
+      <p>Requires Rust / cargo.</p>
+      <pre><code>git clone https://github.com/bradmontgomery/claude-usage.git
+cd claude-usage
+make install-hook</code></pre>
+      <p><code>make install-hook</code> builds both binaries, copies them to <code>~/.local/bin/</code>, and registers the <code>SessionEnd</code> hook in <code>~/.claude/settings.json</code>. Make sure <code>~/.local/bin</code> is on your <code>PATH</code>.</p>
+
+      <h3>Pre-built binaries</h3>
+      <p>Download the archive for your platform from the <a href="https://github.com/bradmontgomery/claude-usage/releases/latest">Releases page</a> and extract both binaries (<code>claude-usage</code> and <code>collect-session-stats</code>) to somewhere on your <code>PATH</code>.</p>
+
+      <table>
+        <thead>
+          <tr><th>Platform</th><th>Archive</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Linux / WSL</td><td><code>claude-usage-linux-x86_64.tar.gz</code></td></tr>
+          <tr><td>macOS (Intel + Apple Silicon)</td><td><code>claude-usage-macos-universal.tar.gz</code></td></tr>
+          <tr><td>Windows</td><td><code>claude-usage-windows-x86_64.zip</code></td></tr>
+        </tbody>
+      </table>
+
+      <p>Then register the hook manually:</p>
+      <pre><code>python3 hook/register.py /path/to/collect-session-stats</code></pre>
+
+      <h3>First run</h3>
+      <p>Start (or finish) a Claude Code session to generate your first log entry, then:</p>
+      <pre><code>claude-usage</code></pre>
+    </section>
+
+    <!-- Usage -->
+    <section id="usage">
+      <h2>Usage</h2>
+      <pre><code>claude-usage                        # last 30 days, cost chart
+claude-usage --days 7               # last 7 days
+claude-usage --chart tokens         # token chart instead of cost
+claude-usage --chart tokens --days 14</code></pre>
+
+      <table>
+        <thead>
+          <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>-d</code>, <code>--days N</code></td><td><code>30</code></td><td>How many days back to include</td></tr>
+          <tr><td><code>--chart cost|tokens</code></td><td><code>cost</code></td><td>Metric shown in the bar chart</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Development -->
+    <section id="development">
+      <h2>Development</h2>
+      <pre><code>make build        # debug build (both binaries)
+make release      # optimized build
+make run          # cargo run claude-usage (pass args after --)
+make check        # fast compile check, no binary produced
+make install      # build + copy both binaries to ~/.local/bin
+make install-hook # install + register the SessionEnd hook
+make clean        # remove the target/ directory</code></pre>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing">
+      <h2>Keeping pricing current</h2>
+      <p>Token pricing is defined in <code>src/collect_session_stats.rs</code> in the <code>model_price</code> function. If Anthropic changes pricing, update the values there, rebuild with <code>make install</code>, and re-run <code>make install-hook</code> to re-register.</p>
+      <p>Models not in the pricing table are tracked but marked as unpriced — the CLI will show a warning when this happens.</p>
+    </section>
+
+    <!-- Log format -->
+    <section id="log-format">
+      <h2>Log format</h2>
+      <p>Each line in <code>~/.claude/usage-log.jsonl</code> is a JSON object:</p>
+      <pre><code>{
+  "session_id": "...",
+  "recorded_at": "2026-05-05T12:00:00+00:00",
+  "session_start": "2026-05-05T10:00:00Z",
+  "session_end": "2026-05-05T11:00:00Z",
+  "duration_ms": 3600000,
+  "message_count": 42,
+  "tool_call_count": 18,
+  "git_branch": "main",
+  "cwd": "/home/user/projects/myapp",
+  "total_cost_usd": 0.2341,
+  "models": {
+    "claude-sonnet-4-6": {
+      "input_tokens": 50000,
+      "output_tokens": 8000,
+      "cache_write_tokens": 12000,
+      "cache_read_tokens": 30000,
+      "cost_usd": 0.2341
+    }
+  },
+  "unpriced_models": []
+}</code></pre>
+    </section>
+
+    <footer>
+      Built with <a href="https://jenil.github.io/chota/">Chota</a> ·
+      <a href="https://github.com/bradmontgomery/claude-usage">bradmontgomery/claude-usage</a>
+    </footer>
+
+  </div>
+
+  <script>
+    function showTab(id) {
+      document.getElementById('tab-linux').style.display = 'none';
+      document.getElementById('tab-windows').style.display = 'none';
+      document.getElementById('tab-' + id).style.display = 'block';
+      document.querySelectorAll('.tab-btn').forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
