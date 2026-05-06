@@ -16,6 +16,20 @@ function Info($msg) { Write-Host "==> $msg" -ForegroundColor Blue }
 function Ok($msg)   { Write-Host "  + $msg" -ForegroundColor Green }
 function Die($msg)  { Write-Error "Error: $msg"; exit 1 }
 
+# ConvertFrom-Json -AsHashtable requires PS 6+; this works on PS 5.1
+function ConvertTo-Hashtable($obj) {
+    if ($obj -is [System.Management.Automation.PSCustomObject]) {
+        $hash = @{}
+        foreach ($prop in $obj.PSObject.Properties) {
+            $hash[$prop.Name] = ConvertTo-Hashtable $prop.Value
+        }
+        return $hash
+    } elseif ($obj -is [System.Object[]]) {
+        return @($obj | ForEach-Object { ConvertTo-Hashtable $_ })
+    }
+    return $obj
+}
+
 # ── Resolve latest release tag ───────────────────────────────────────────────
 
 Info "Fetching latest release..."
@@ -62,7 +76,7 @@ $entry = @{
 
 if (Test-Path $settingsPath) {
     try {
-        $config = Get-Content $settingsPath -Raw | ConvertFrom-Json -AsHashtable
+        $config = Get-Content $settingsPath -Raw | ConvertFrom-Json | ConvertTo-Hashtable
     } catch {
         Write-Warning "settings.json contains invalid JSON — skipping hook registration."
         $config = $null
