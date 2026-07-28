@@ -38,14 +38,24 @@ def main():
     hooks = config.setdefault("hooks", {})
     session_end = hooks.setdefault("SessionEnd", [])
 
-    # Matches both old python hook and new Rust binary
-    already = any(
-        "collect-session-stats" in e.get("hooks", [{}])[0].get("command", "")
-        for e in session_end
-        if e.get("hooks")
-    )
-    if already:
-        print("Hook already registered — nothing to do.")
+    # Look for an entry that already points at *this exact* command, and
+    # separately for stale ones (the pre-Rust python hook, or a binary at a
+    # different path) that should be upgraded in place rather than duplicated.
+    upgraded = []
+    for entry in session_end:
+        hook = (entry.get("hooks") or [{}])[0]
+        command = hook.get("command", "")
+        if command == HOOK_COMMAND:
+            print("Hook already registered — nothing to do.")
+            return
+        if "collect-session-stats" in command:
+            hook["command"] = HOOK_COMMAND
+            upgraded.append(command)
+
+    if upgraded:
+        SETTINGS.write_text(json.dumps(config, indent=2) + "\n")
+        for old in upgraded:
+            print(f"Upgraded stale SessionEnd hook: {old} -> {HOOK_COMMAND}")
         return
 
     session_end.append(HOOK_ENTRY)
