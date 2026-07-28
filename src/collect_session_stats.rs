@@ -8,20 +8,30 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 // (input, output, cache_write, cache_read) per million tokens (USD)
-// Last updated: 2026-07-17  https://www.anthropic.com/pricing
+// Last updated: 2026-07-27  https://www.anthropic.com/pricing
 fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
     match model {
         "claude-fable-5" => Some((10.00, 50.00, 12.50, 1.00)),
+        "claude-mythos-5" => Some((10.00, 50.00, 12.50, 1.00)),
+        "claude-opus-5" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-opus-4-8" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-opus-4-7" => Some((5.00, 25.00, 6.25, 0.50)),
+        "claude-opus-4-6" => Some((5.00, 25.00, 6.25, 0.50)),
+        "claude-opus-4-5" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-sonnet-5" => Some((3.00, 15.00, 3.75, 0.30)),
         "claude-sonnet-4-6" => Some((3.00, 15.00, 3.75, 0.30)),
+        "claude-sonnet-4-5" => Some((3.00, 15.00, 3.75, 0.30)),
         "claude-haiku-4-5-20251001" | "claude-haiku-4-5" => Some((1.00, 5.00, 1.25, 0.10)),
         _ if model.starts_with("claude-fable-5") => Some((10.00, 50.00, 12.50, 1.00)),
+        _ if model.starts_with("claude-mythos-5") => Some((10.00, 50.00, 12.50, 1.00)),
+        _ if model.starts_with("claude-opus-5") => Some((5.00, 25.00, 6.25, 0.50)),
         _ if model.starts_with("claude-opus-4-8") => Some((5.00, 25.00, 6.25, 0.50)),
         _ if model.starts_with("claude-opus-4-7") => Some((5.00, 25.00, 6.25, 0.50)),
+        _ if model.starts_with("claude-opus-4-6") => Some((5.00, 25.00, 6.25, 0.50)),
+        _ if model.starts_with("claude-opus-4-5") => Some((5.00, 25.00, 6.25, 0.50)),
         _ if model.starts_with("claude-sonnet-5") => Some((3.00, 15.00, 3.75, 0.30)),
         _ if model.starts_with("claude-sonnet-4-6") => Some((3.00, 15.00, 3.75, 0.30)),
+        _ if model.starts_with("claude-sonnet-4-5") => Some((3.00, 15.00, 3.75, 0.30)),
         _ if model.starts_with("claude-haiku-4-5") => Some((1.00, 5.00, 1.25, 0.10)),
         _ => None,
     }
