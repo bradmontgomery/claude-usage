@@ -8,13 +8,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 // (input, output, cache_write, cache_read) per million tokens (USD)
-// Last updated: 2026-08-03  https://platform.claude.com/docs/en/about-claude/pricing
-// Note: Sonnet 5 carries introductory pricing (2.00/10.00/2.50/0.20) through
-// 2026-08-31; we intentionally bill it at the standard post-intro rate below.
+// Last updated: 2026-10-09  https://platform.claude.com/docs/en/about-claude/pricing
+// Note: Sonnet 5's $2/$10 launch pricing is now permanent (the planned
+// 2026-09-01 increase to $3/$15 was cancelled).
+// Note: Haiku 5.5 is billed at the <=100K-token prompt rate; prompts over 100K
+// tokens cost 5x more (0.50/2.50/0.625/0.05), which we can't tell per-session here.
 fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
     match model {
         "claude-fable-5" => Some((10.00, 50.00, 12.50, 1.00)),
         "claude-mythos-5" => Some((10.00, 50.00, 12.50, 1.00)),
+        "claude-opus-5-5" => Some((4.00, 20.00, 5.00, 0.20)),
         "claude-opus-5" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-opus-4-8" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-opus-4-7" => Some((5.00, 25.00, 6.25, 0.50)),
@@ -22,14 +25,17 @@ fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
         "claude-opus-4-5" => Some((5.00, 25.00, 6.25, 0.50)),
         "claude-opus-4-1-20250805" | "claude-opus-4-1" => Some((15.00, 75.00, 18.75, 1.50)),
         "claude-opus-4-20250514" | "claude-opus-4-0" => Some((15.00, 75.00, 18.75, 1.50)),
-        "claude-sonnet-5" => Some((3.00, 15.00, 3.75, 0.30)),
+        "claude-sonnet-5-5" => Some((2.00, 10.00, 2.50, 0.10)),
+        "claude-sonnet-5" => Some((2.00, 10.00, 2.50, 0.20)),
         "claude-sonnet-4-6" => Some((3.00, 15.00, 3.75, 0.30)),
         "claude-sonnet-4-5" => Some((3.00, 15.00, 3.75, 0.30)),
         "claude-sonnet-4-20250514" | "claude-sonnet-4-0" => Some((3.00, 15.00, 3.75, 0.30)),
+        "claude-haiku-5-5" => Some((0.10, 0.50, 0.125, 0.01)),
         "claude-haiku-4-5-20251001" | "claude-haiku-4-5" => Some((1.00, 5.00, 1.25, 0.10)),
         "claude-3-5-haiku-20241022" | "claude-3-5-haiku" => Some((0.80, 4.00, 1.00, 0.08)),
         _ if model.starts_with("claude-fable-5") => Some((10.00, 50.00, 12.50, 1.00)),
         _ if model.starts_with("claude-mythos-5") => Some((10.00, 50.00, 12.50, 1.00)),
+        _ if model.starts_with("claude-opus-5-5") => Some((4.00, 20.00, 5.00, 0.20)),
         _ if model.starts_with("claude-opus-5") => Some((5.00, 25.00, 6.25, 0.50)),
         _ if model.starts_with("claude-opus-4-8") => Some((5.00, 25.00, 6.25, 0.50)),
         _ if model.starts_with("claude-opus-4-7") => Some((5.00, 25.00, 6.25, 0.50)),
@@ -38,11 +44,13 @@ fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
         _ if model.starts_with("claude-opus-4-1") => Some((15.00, 75.00, 18.75, 1.50)),
         _ if model.starts_with("claude-opus-4-0") => Some((15.00, 75.00, 18.75, 1.50)),
         _ if model.starts_with("claude-opus-4-2025") => Some((15.00, 75.00, 18.75, 1.50)),
-        _ if model.starts_with("claude-sonnet-5") => Some((3.00, 15.00, 3.75, 0.30)),
+        _ if model.starts_with("claude-sonnet-5-5") => Some((2.00, 10.00, 2.50, 0.10)),
+        _ if model.starts_with("claude-sonnet-5") => Some((2.00, 10.00, 2.50, 0.20)),
         _ if model.starts_with("claude-sonnet-4-6") => Some((3.00, 15.00, 3.75, 0.30)),
         _ if model.starts_with("claude-sonnet-4-5") => Some((3.00, 15.00, 3.75, 0.30)),
         _ if model.starts_with("claude-sonnet-4-0") => Some((3.00, 15.00, 3.75, 0.30)),
         _ if model.starts_with("claude-sonnet-4-2025") => Some((3.00, 15.00, 3.75, 0.30)),
+        _ if model.starts_with("claude-haiku-5-5") => Some((0.10, 0.50, 0.125, 0.01)),
         _ if model.starts_with("claude-haiku-4-5") => Some((1.00, 5.00, 1.25, 0.10)),
         _ if model.starts_with("claude-3-5-haiku") => Some((0.80, 4.00, 1.00, 0.08)),
         _ => None,
