@@ -15,6 +15,10 @@ use serde_json::Value;
 // tokens cost 5x more (0.50/2.50/0.625/0.05), which we can't tell per-session here.
 fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
     match model {
+        "claude-fable-5-2" => Some((8.00, 40.00, 10.00, 0.20)),
+        "claude-mythos-5-2" => Some((8.00, 40.00, 10.00, 0.20)),
+        "claude-fable-5-1" => Some((10.00, 50.00, 12.50, 0.25)),
+        "claude-mythos-5-1" => Some((10.00, 50.00, 12.50, 0.25)),
         "claude-fable-5" => Some((10.00, 50.00, 12.50, 1.00)),
         "claude-mythos-5" => Some((10.00, 50.00, 12.50, 1.00)),
         "claude-opus-5-5" => Some((4.00, 20.00, 5.00, 0.20)),
@@ -33,6 +37,10 @@ fn model_price(model: &str) -> Option<(f64, f64, f64, f64)> {
         "claude-haiku-5-5" => Some((0.10, 0.50, 0.125, 0.01)),
         "claude-haiku-4-5-20251001" | "claude-haiku-4-5" => Some((1.00, 5.00, 1.25, 0.10)),
         "claude-3-5-haiku-20241022" | "claude-3-5-haiku" => Some((0.80, 4.00, 1.00, 0.08)),
+        _ if model.starts_with("claude-fable-5-2") => Some((8.00, 40.00, 10.00, 0.20)),
+        _ if model.starts_with("claude-mythos-5-2") => Some((8.00, 40.00, 10.00, 0.20)),
+        _ if model.starts_with("claude-fable-5-1") => Some((10.00, 50.00, 12.50, 0.25)),
+        _ if model.starts_with("claude-mythos-5-1") => Some((10.00, 50.00, 12.50, 0.25)),
         _ if model.starts_with("claude-fable-5") => Some((10.00, 50.00, 12.50, 1.00)),
         _ if model.starts_with("claude-mythos-5") => Some((10.00, 50.00, 12.50, 1.00)),
         _ if model.starts_with("claude-opus-5-5") => Some((4.00, 20.00, 5.00, 0.20)),
